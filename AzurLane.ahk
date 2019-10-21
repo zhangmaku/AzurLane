@@ -68,7 +68,8 @@ if (title="") or (title="ERROR") {
 		}
     }
 }
-Run, %comspec% /c powercfg /change /monitor-timeout-ac 0,, Hide
+Run, %comspec% /c powercfg /change /monitor-timeout-ac 0,, Hide ;關閉螢幕省電模式
+Run, dnconsole.exe globalsetting --fastplay 1 --cleanmode 1, %LDplayer%, Hide ;關閉雷電廣告
 Gui Add, Edit, x110 y17 w100 h21 vtitle ginisettings , %title%
 Gui Add, Text,  x220 y20 w80 h20 , 代號：
 IniRead, emulatoradb, settings.ini, emulator, emulatoradb, 0
@@ -504,36 +505,57 @@ Global emulatoradb
 LogShow("開始！")
 WinRestore,  %title%
 WinMove,  %title%, , , , 1318, 758
+WinSet, Transparent, off, %title%
 Settimer, Mainsub, 2500
-Settimer, WinSub, 5000
+;~ Settimer, WinSub, 5000
 return
 
 Mainsub: ;優先檢查出擊以外的其他功能
-Formation := DwmCheckcolor(895, 415, 16777215) ;編隊BTN
-WeighAnchor := DwmCheckcolor(1035, 345, 16777215) ;出擊BTN
-LDtitlebar := DwmCheckcolor(1, 1, 2633790) ;
-if (Formation and WeighAnchor and LDtitlebar)
+WinGet, Wincheck, MinMax, %title%
+if Wincheck=-1
 {
-	if (MissionSub) ;任務
+	LogShow("視窗被縮小，等待自動恢復")
+	WinSet, Transparent, 0, %title%
+	sleep 200
+	WinRestore, %title%
+	sleep 200
+	WinSet, Transparent, off, %title%
+}
+else if Wincheck=1
+{
+	WinRestore, %title%
+	LogShow("視窗被放大，等待自動恢復")
+}
+else if Wincheck=0
+{
+	Formation := DwmCheckcolor(895, 415, 16777215) ;編隊BTN
+	WeighAnchor := DwmCheckcolor(1035, 345, 16777215) ;出擊BTN
+	MissionCheck := DwmCheckcolor(943, 711, 11883842)
+	AcademyCheck := DwmCheckcolor(627, 712, 11882818) ;學院驚嘆號
+	DormMissionCheck := DwmCheckcolor(784, 712, 11883842) ;後宅驚嘆號
+	MainCheck := DwmCheckcolor(13, 201, 16777215) ;主選單圖示
+	LDtitlebar := DwmCheckcolor(1, 1, 2633790) ;
+	if (MissionSub and MissionCheck and MainCheck and Formation and WeighAnchor and LDtitlebar) ;任務
 	{
 		gosub, MissionSub
-		sleep 200
 	}
-	if (AcademySub and AcademyDone<1) ;學院
+	else if (AcademySub and AcademyCheck and MainCheck and Formation and WeighAnchor and LDtitlebar and AcademyDone<1) ;學院
 	{
 		gosub, AcademySub
-		sleep 200
 	}
-	if (DormSub and DormDone<1)  ;後宅
+	else if (DormSub and DormMissionCheck and MainCheck and Formation and WeighAnchor and LDtitlebar and DormDone<1)  ;後宅
 	{
 		gosub, DormSub
-		sleep 200
+	}
+	else if (AnchorSub and LDtitlebar) ;出擊
+	{
+		gosub, AnchorSub
 	}
 }
-if (AnchorSub) ;出擊
-{
-	gosub, AnchorSub
-}
+
+
+
+
 return
 
 clock:
@@ -752,10 +774,11 @@ if (Withdraw and Switchover )
 			xx := x
             yy := y + 80
             C_Click(xx, yy)
-			;~ C_Click(xx, yy)
+			C_Click(xx, yy)
             if (DwmCheckcolor(516, 357, 16250871))  
             {
                 bulletFailed++
+				return
             }
 			bulletFailed++ ;只找一次 直到進入戰鬥 避免遇到空襲一直前往子彈點 (第一輪不找)
             sleep 3050
@@ -766,10 +789,11 @@ if (Withdraw and Switchover )
             xx := x
             yy := y + 70
             C_Click(xx, yy)
-			;~ C_Click(xx, yy)
+			C_Click(xx, yy)
             if (DwmCheckcolor(516, 357, 16250871)) 
             {
                 questFailed++
+				return
             }
             sleep 3050
         }
@@ -785,7 +809,7 @@ if (Withdraw and Switchover )
 				TargetFailed3 := 1
 				TargetFailed4 := 1
 				C_Click(xx, yy)
-				;~ C_Click(xx, yy)
+				C_Click(xx, yy)
 			}
 			else if Bossaction=優先攻擊－切換隊伍
 			{
@@ -804,7 +828,7 @@ if (Withdraw and Switchover )
 				else
 				{
 				C_Click(xx, yy)
-				;~ C_Click(xx, yy)
+				C_Click(xx, yy)
 				}
 			}
 			else
@@ -819,6 +843,7 @@ if (Withdraw and Switchover )
 				TargetFailed2 := 0
 				TargetFailed3 := 0
 				TargetFailed4 := 0
+				return
 			}
 			sleep 3050
 			BackAttack()
@@ -834,10 +859,11 @@ if (Withdraw and Switchover )
             xx := x 
             yy := y 
             C_Click(xx, yy)
-			;~ C_Click(xx, yy)
+			C_Click(xx, yy)
             if (DwmCheckcolor(516, 357, 16250871))  ;16250871
             {
                 TargetFailed2++
+				return
             }
             sleep 3050
 			BackAttack()
@@ -853,10 +879,11 @@ if (Withdraw and Switchover )
             xx := x 
             yy := y 
             C_Click(xx, yy)
-			;~ C_Click(xx, yy)
+			C_Click(xx, yy)
             if (DwmCheckcolor(516, 357, 16250871))  ;16250871
             {
                 TargetFailed++
+				return
             }
             sleep 3050
 			BackAttack()
@@ -872,10 +899,11 @@ if (Withdraw and Switchover )
             xx := x
             yy := y 
             C_Click(xx, yy)
-			;~ C_Click(xx, yy)
+			C_Click(xx, yy)
             if (DwmCheckcolor(516, 357, 16250871))  ;16250871
             {
                 TargetFailed3++
+				return
             }
             sleep 3050
 			BackAttack()
@@ -891,10 +919,11 @@ if (Withdraw and Switchover )
             xx := x
             yy := y
             C_Click(xx, yy)
-			;~ C_Click(xx, yy)
+			C_Click(xx, yy)
             if (DwmCheckcolor(516, 357, 16250871))  ;16250871
             {
                 TargetFailed4++
+				return
             }
             sleep 3050
 			BackAttack()
@@ -925,11 +954,12 @@ if (Withdraw and Switchover )
 			else
 			{
 				C_Click(xx, yy)
-				;~ C_Click(xx, yy)
+				C_Click(xx, yy)
 			}
             if (DwmCheckcolor(516, 357, 16250871)) 
             {
                 BossFailed++
+				return
             }
             sleep 3050
 			BackAttack()
@@ -978,7 +1008,7 @@ if (Withdraw and Switchover )
 			{
 				LogShow("未找到指定目標，嘗試隨機移動")
 				C_Click(x, y)
-				;~ C_Click(x, y)
+				C_Click(x, y)
 				SearchLoopcountFailed := 0
 				sleep 2000
 				if (DwmCheckcolor(793, 711, 16250871))
@@ -1327,14 +1357,14 @@ Try
 }
 return
 
-F3::
+;~ F3::
 ;~ pBitmap := Gdip_BitmapFromHWND(UniqueID), Gdip_GetDimensions(pBitmap, w, h)
 ;~ MapX1 := 100, MapY1 := 100, MapX2 := 1235, MapY2 := 650
 ;~ g := Gdip_PixelSearch(pBitmap, FinalBoss,  x,  y)
 ;~ g := Gdip_PixelSearch2( x,  y, MapX1, MapY1, MapX2, MapY2, 4287895576, 0)
 ;~ tooltip x%x% y%y% g%g%
 ;~ g := GdipImageSearch2(x, y, "img/target4_1.png", 105, 8, 0, 0, 1280, 720) 
-return
+;~ return
 
 BtnCheck:
     Withdraw := DwmCheckcolor(772, 706, 12996946) ; Checkcolor(772, 706, 4291187026)
@@ -1347,7 +1377,7 @@ return
 演習SUB:
 WinRestore,  %title%
 WinMove,  %title%, , , , 1318, 758
-LogShow("開始演習。")
+LogShow("開始演習，請手動進入演習。")
 Loop
 {
 	if (DwmCheckcolor(1186, 389, 16777215) and DwmCheckcolor(1122, 401, 16777215) and DwmCheckcolor(730, 692, 14085119)) ;演習介面隨機
@@ -1435,7 +1465,8 @@ else
 {
 	msgbox 123
 }
-DailyGoal := 1
+DailyGoal := 1 ;打第一個
+LogShow("開始每日任務，請手動進入每日。")
 Loop
 {
 	if (DwmCheckcolor(384, 192, 16768825) and DwmCheckcolor(397, 190, 16768825))
@@ -1662,7 +1693,7 @@ if Wincheck=-1
 	sleep 500
 	WinRestore, %title%
 	sleep 500
-	WinSet, Transparent, 255, %title%
+	WinSet, Transparent, off, %title%
 }
 else if Wincheck=1
 {
@@ -1779,7 +1810,7 @@ if ( DormMissionCheck and MainCheck) ;後宅發現任務
 			C_Click(x, y)
 			Dorm_heart++
 		}
-		sleep 300
+		sleep 200
 		Dormcount++
 		if (Dormcount>30)
 		{
@@ -1847,7 +1878,7 @@ DelegationMission() {
 		sleep 300
 	} until DwmCheckcolor(166, 65, 15201279) ;進入委託頁面
 	C_Click(53, 191) ;每日
-	Loop
+	Loop, 30
 	{
 		sleep 300
 		if (DwmCheckcolor(181, 136, 11358530)) {
@@ -1875,7 +1906,7 @@ DelegationMission() {
 	}
 	C_Click(51, 283) ;緊急
 	sleep 1200
-	Loop
+	Loop, 30
 	{
 		sleep 500
 		if (DwmCheckcolor(181, 136, 11358530))
@@ -2003,7 +2034,7 @@ DelegationMission3() ;自動接收軍事任務 . 0=接受失敗 . 1=接受成功
 
 DelegationMission2()
 {
-Loop  ;等待選單開啟
+Loop, 30  ;等待選單開啟
 	{
 		sleep 300
 		if (DwmCheckcolor(992, 365, 16777215) and DwmCheckcolor(1149, 366, 16777215))
