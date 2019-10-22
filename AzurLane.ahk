@@ -17,12 +17,11 @@ FileInstall, img\target6.png, %A_WorkingDir%\img\target6.png, 1
 FileInstall, img\test.png, %A_WorkingDir%\img\test.png, 1
 FileInstall, img\WH.png, %A_ScriptDir%\img\WH.png, 1
 */
-#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
-; #Warn  ; Enable warnings to assist with detecting common errors.
-SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir %A_WorkingDir%  ; Ensures a consistent starting directory.
 if not A_IsAdmin ;強制用管理員開啟
 Run *RunAs "%A_ScriptFullPath%"
+#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir %A_WorkingDir%  ; Ensures a consistent starting directory.
 #Persistent
 DetectHiddenWindows, On
 DetectHiddenText, On
@@ -69,7 +68,6 @@ if (title="") or (title="ERROR") {
     }
 }
 Run, %comspec% /c powercfg /change /monitor-timeout-ac 0,, Hide ;關閉螢幕省電模式
-Run, dnconsole.exe globalsetting --fastplay 1 --cleanmode 1, %LDplayer%, Hide ;關閉雷電廣告
 Gui Add, Edit, x110 y17 w100 h21 vtitle ginisettings , %title%
 Gui Add, Text,  x220 y20 w80 h20 , 代號：
 IniRead, emulatoradb, settings.ini, emulator, emulatoradb, 0
@@ -539,23 +537,22 @@ else if Wincheck=0
 	{
 		gosub, MissionSub
 	}
-	else if (AcademySub and AcademyCheck and MainCheck and Formation and WeighAnchor and LDtitlebar and AcademyDone<1) ;學院
+	sleep 100
+	if (AcademySub and AcademyCheck and MainCheck and Formation and WeighAnchor and LDtitlebar and AcademyDone<1) ;學院
 	{
 		gosub, AcademySub
 	}
-	else if (DormSub and DormMissionCheck and MainCheck and Formation and WeighAnchor and LDtitlebar and DormDone<1)  ;後宅
+	sleep 100
+	if (DormSub and DormMissionCheck and MainCheck and Formation and WeighAnchor and LDtitlebar and DormDone<1)  ;後宅
 	{
 		gosub, DormSub
 	}
-	else if (AnchorSub and LDtitlebar) ;出擊
+	sleep 100
+	if ((AnchorSub and LDtitlebar) and (!AcademyCheck or AcademyDone=1 or !AcademySub) and (!DormMissionCheck or DormDone=1 or !DormSub))  ;出擊
 	{
 		gosub, AnchorSub
 	}
 }
-
-
-
-
 return
 
 clock:
@@ -563,18 +560,6 @@ StopAnchor := 0
 return
 
 AnchorSub: ;出擊
-if (DwmCheckcolor(1259, 695, 16777215) and DwmCheckcolor(1240, 700, 22957) and DwmCheckcolor(52, 578, 5937919))
-{
-	LogShow("位於遊戲首頁，自動登入")
-	C_Click(642, 420)
-	sleep 6000
-	if (DwmCheckcolor(144, 93, 16777215) and DwmCheckcolor(183, 93, 16777215))
-	{
-		LogShow("出現系統公告，不再顯示")
-		C_Click(994, 110)
-		C_Click(1193, 103)
-	}
-}
 if (DwmCheckcolor(63, 173, 16774127) and DwmCheckcolor(1140, 335, 14577994)) ;在主選單偵測到軍事任務已完成
 {
 	LogShow("執行軍事委託")
@@ -610,7 +595,7 @@ if (DwmCheckcolor(63, 173, 16774127) and DwmCheckcolor(1140, 335, 14577994)) ;�
 		C_Click(457, 313)
 		sleep 1500
 		DelegationMission()
-		Loop
+		Loop, 5
 		{
 			if DwmCheckcolor(109, 172, 4876692)
 			{
@@ -618,7 +603,7 @@ if (DwmCheckcolor(63, 173, 16774127) and DwmCheckcolor(1140, 335, 14577994)) ;�
 				sleep 2000
 			}
 			sleep 300
-		} until !DwmCheckcolor(120, 200, 16248815)
+		}
 	}
 	else
 	{
@@ -1442,6 +1427,22 @@ return
 
 startemulatorSub:
 run, dnconsole.exe launchex --index %emulatoradb% --packagename "com.hkmanjuu.azurlane.gp" , %ldplayer%, Hide
+Loop
+{
+	if (DwmCheckcolor(1259, 695, 16777215) and DwmCheckcolor(1240, 700, 22957) and DwmCheckcolor(52, 578, 5937919))
+	{
+		LogShow("位於遊戲首頁，自動登入")
+		C_Click(642, 420)
+		sleep 6000
+	}
+	if (DwmCheckcolor(144, 93, 16777215) and DwmCheckcolor(183, 93, 16777215))
+	{
+		LogShow("出現系統公告，不再顯示")
+		C_Click(994, 110)
+		C_Click(1193, 103)
+	}
+	sleep 250
+} until DwmCheckcolor(894, 422, 16777215) and DwmCheckcolor(12, 200, 16777215) and DwmCheckcolor(1012, 65, 16729459)
 return
 
 DailyGoalSub:
